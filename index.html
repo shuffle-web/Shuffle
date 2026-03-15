@@ -1,797 +1,431 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Shuffle</title>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,500;0,600;1,300;1,500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-:root {
-  --cream: #F8F4EF;
-  --parchment: #F2EDE6;
-  --warm: #EDE5DA;
-  --blush: #D4A898;
-  --rose: #B8765E;
-  --ink: #1C1917;
-  --mid: #7C7269;
-  --light: #C8C0B8;
-  --white: #FDFBF8;
-}
-* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-html, body {
-  width:100%; max-width:430px; margin:0 auto;
-  height:100%; min-height:100vh;
-  font-family:'DM Sans',sans-serif;
-  background:var(--cream); color:var(--ink);
-  overflow-x:hidden;
-}
-.app { display:flex; flex-direction:column; height:100dvh; overflow:hidden; }
-.screen { display:none; flex:1; overflow-y:auto; overflow-x:hidden; flex-direction:column; }
-.screen.active { display:flex; }
-
-/* TOPBAR */
-.topbar {
-  padding:52px 24px 16px;
-  background:var(--white); border-bottom:1px solid var(--warm);
-  flex-shrink:0;
-}
-.topbar-row { display:flex; align-items:baseline; justify-content:space-between; }
-.wordmark { font-family:'Cormorant Garamond',serif; font-size:30px; font-weight:600; letter-spacing:-0.5px; }
-.wordmark em { font-style:italic; color:var(--rose); }
-.topbar-sub { font-size:12px; color:var(--mid); margin-top:3px; letter-spacing:0.2px; }
-
-/* BOTTOM NAV */
-.bottom-nav {
-  display:flex; background:var(--white);
-  border-top:1px solid var(--warm);
-  padding:10px 0 20px; flex-shrink:0; z-index:50;
-}
-.nav-btn {
-  flex:1; display:flex; flex-direction:column; align-items:center;
-  gap:4px; border:none; background:none; cursor:pointer; padding:6px 0;
-}
-.nav-icon svg { width:20px; height:20px; stroke:var(--light); stroke-width:1.5; fill:none; transition:stroke .15s; }
-.nav-btn.active .nav-icon svg { stroke:var(--ink); }
-.nav-lbl { font-size:10px; letter-spacing:.8px; text-transform:uppercase; color:var(--light); font-weight:500; transition:color .15s; }
-.nav-btn.active .nav-lbl { color:var(--ink); }
-
-/* HOME */
-.home-body { flex:1; overflow-y:auto; padding-bottom:16px; }
-.section-label { padding:24px 24px 12px; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--mid); font-weight:500; }
-.picks-row { display:flex; gap:12px; padding:0 24px 24px; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
-.picks-row::-webkit-scrollbar { display:none; }
-.pick-card { scroll-snap-align:start; flex-shrink:0; width:196px; background:var(--white); border:1px solid var(--warm); border-radius:14px; overflow:hidden; cursor:pointer; transition:transform .15s; }
-.pick-card:active { transform:scale(.97); }
-.pick-img { height:210px; position:relative; display:flex; align-items:center; justify-content:center; }
-.pick-board { display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; gap:2px; width:100%; height:100%; }
-.pb-cell { display:flex; align-items:center; justify-content:center; font-family:'Cormorant Garamond',serif; font-size:22px; color:var(--light); }
-.pb-cell:first-child { grid-row:span 2; font-size:34px; }
-.pick-rank { position:absolute; top:10px; left:10px; background:var(--ink); color:var(--cream); font-size:10px; letter-spacing:1px; text-transform:uppercase; padding:4px 10px; border-radius:20px; font-weight:500; }
-.pick-body { padding:14px 16px 16px; }
-.pick-event { font-size:10px; letter-spacing:1.2px; text-transform:uppercase; color:var(--blush); font-weight:500; margin-bottom:4px; }
-.pick-name { font-family:'Cormorant Garamond',serif; font-size:18px; font-weight:500; line-height:1.2; margin-bottom:5px; }
-.pick-items { font-size:12px; color:var(--mid); line-height:1.5; }
-
-.quick-wrap { padding:0 24px 32px; }
-.quick-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-.qchip { background:var(--white); border:1px solid var(--warm); border-radius:12px; padding:14px 16px; cursor:pointer; text-align:left; transition:all .15s; }
-.qchip:active { background:var(--parchment); transform:scale(.97); }
-.qchip-ev { font-size:13px; font-weight:500; color:var(--ink); }
-.qchip-vibe { font-size:11px; color:var(--mid); margin-top:2px; }
-
-/* DRESS ME */
-.dress-body { flex:1; overflow-y:auto; padding-bottom:32px; }
-.filter-block { padding:20px 24px 0; }
-.filter-title { font-size:11px; letter-spacing:1.2px; text-transform:uppercase; color:var(--mid); font-weight:500; margin-bottom:10px; }
-.chips-row { display:flex; flex-wrap:wrap; gap:8px; }
-.chip { padding:9px 16px; font-size:13px; font-family:'DM Sans',sans-serif; border:1px solid var(--light); border-radius:8px; background:var(--white); cursor:pointer; transition:all .15s; color:var(--ink); }
-.chip:active { transform:scale(.96); }
-.chip.on { background:var(--ink); color:var(--cream); border-color:var(--ink); }
-.go-btn { display:block; margin:24px 24px 0; width:calc(100% - 48px); background:var(--ink); color:var(--cream); border:none; border-radius:12px; padding:16px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; letter-spacing:.5px; cursor:pointer; transition:all .15s; }
-.go-btn:active { background:var(--rose); transform:scale(.98); }
-.go-btn:disabled { background:var(--light); }
-.results-area { padding:24px 24px 0; }
-
-/* OUTFIT CARDS */
-.r-header { margin-bottom:14px; }
-.r-header h3 { font-family:'Cormorant Garamond',serif; font-size:24px; font-weight:500; }
-.r-header p { font-size:13px; color:var(--mid); margin-top:3px; }
-.stylist-note { background:linear-gradient(135deg,var(--parchment),var(--warm)); border:1px solid var(--blush); border-radius:12px; padding:16px 18px; display:flex; gap:12px; align-items:flex-start; margin-bottom:16px; }
-.sn-av { width:34px; height:34px; border-radius:50%; background:var(--blush); display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; color:white; font-weight:700; }
-.sn-name { font-size:10px; letter-spacing:.8px; text-transform:uppercase; color:var(--rose); font-weight:600; margin-bottom:3px; }
-.sn-msg { font-size:13px; line-height:1.55; font-style:italic; color:var(--ink); }
-.outfit-card { background:var(--white); border:1px solid var(--warm); border-radius:14px; overflow:hidden; margin-bottom:14px; animation:su .35s ease both; }
-@keyframes su { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
-.outfit-card:nth-child(3){animation-delay:.08s} .outfit-card:nth-child(4){animation-delay:.16s} .outfit-card:nth-child(5){animation-delay:.24s}
-.oc-board { height:160px; display:grid; grid-template-columns:1.5fr 1fr; grid-template-rows:1fr 1fr; gap:2px; }
-.ocb { display:flex; align-items:center; justify-content:center; font-family:'Cormorant Garamond',serif; font-size:28px; color:rgba(255,255,255,.6); overflow:hidden; }
-.ocb:first-child { grid-row:span 2; font-size:40px; }
-.oc-body { padding:18px 20px 20px; }
-.oc-num { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--blush); margin-bottom:5px; }
-.oc-name { font-family:'Cormorant Garamond',serif; font-size:22px; font-weight:500; line-height:1.15; margin-bottom:8px; }
-.oc-why { font-size:13px; color:var(--mid); line-height:1.6; margin-bottom:12px; }
-.oc-fit { font-size:12px; color:var(--mid); font-style:italic; margin-bottom:12px; }
-.oc-tags { display:flex; flex-wrap:wrap; gap:6px; }
-.oc-tag { font-size:11px; background:var(--parchment); border:1px solid var(--warm); border-radius:6px; padding:4px 10px; color:var(--mid); }
-.oc-vibe { font-size:11px; background:var(--rose); border-radius:6px; padding:4px 10px; color:white; font-weight:500; }
-
-/* AI LOADING */
-.ai-load { padding:48px 24px; text-align:center; }
-.ai-dots { display:flex; justify-content:center; gap:6px; margin-bottom:16px; }
-.ai-dot { width:7px; height:7px; border-radius:50%; background:var(--blush); animation:dp 1.4s infinite; }
-.ai-dot:nth-child(2){animation-delay:.2s} .ai-dot:nth-child(3){animation-delay:.4s}
-@keyframes dp { 0%,80%,100%{transform:scale(.7);opacity:.5} 40%{transform:scale(1);opacity:1} }
-.ai-load p { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:19px; color:var(--mid); }
-.ai-load-sub { font-size:12px; color:var(--light); margin-top:6px; }
-
-/* WARDROBE */
-.wardrobe-body { flex:1; overflow-y:auto; }
-.upload-sec { padding:20px 24px 0; }
-.upload-sec-title { font-size:11px; letter-spacing:1.2px; text-transform:uppercase; color:var(--mid); font-weight:500; margin-bottom:12px; }
-.upload-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
-.upload-grid.four { grid-template-columns:repeat(4,1fr); }
-.ucat { background:var(--white); border:1px solid var(--warm); border-radius:12px; padding:16px 10px; display:flex; flex-direction:column; align-items:center; gap:8px; cursor:pointer; transition:all .15s; text-align:center; position:relative; }
-.ucat input { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
-.ucat:active { transform:scale(.96); background:var(--parchment); }
-.ucat-icon { width:42px; height:42px; border-radius:10px; background:var(--parchment); display:flex; align-items:center; justify-content:center; }
-.ucat-icon svg { width:22px; height:22px; stroke:var(--rose); stroke-width:1.5; fill:none; }
-.ucat-lbl { font-size:12px; font-weight:500; color:var(--ink); }
-.ucat-sub { font-size:10px; color:var(--mid); }
-
-.w-cats { padding:20px 24px 0; }
-.w-cat-row { display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; scrollbar-width:none; }
-.w-cat-row::-webkit-scrollbar { display:none; }
-.wct { flex-shrink:0; padding:7px 16px; font-size:12px; font-family:'DM Sans',sans-serif; border:1px solid var(--light); border-radius:20px; background:var(--white); color:var(--mid); cursor:pointer; transition:all .15s; }
-.wct.on { background:var(--ink); color:var(--cream); border-color:var(--ink); }
-
-.w-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:2px; padding:10px 0 40px; }
-.w-item { aspect-ratio:3/4; position:relative; overflow:hidden; background:var(--parchment); cursor:pointer; }
-.w-item img { width:100%; height:100%; object-fit:cover; display:block; }
-.w-item-emoji { display:flex; align-items:center; justify-content:center; font-size:36px; width:100%; height:100%; }
-.w-overlay { position:absolute; inset:0; background:rgba(28,25,23,.55); display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-end; padding:10px; opacity:0; transition:opacity .15s; }
-.w-item:active .w-overlay { opacity:1; }
-.w-iname { font-size:11px; color:white; font-weight:500; line-height:1.3; }
-.w-icat { font-size:10px; color:rgba(255,255,255,.7); text-transform:uppercase; letter-spacing:.5px; margin-top:1px; }
-.w-sk { aspect-ratio:3/4; background:var(--warm); display:flex; align-items:center; justify-content:center; flex-direction:column; gap:6px; }
-.w-sk-pulse { width:30px; height:30px; border-radius:50%; background:var(--light); animation:skp 1.2s ease infinite; }
-@keyframes skp { 0%,100%{opacity:.4} 50%{opacity:1} }
-.w-sk-lbl { font-size:10px; color:var(--light); letter-spacing:.5px; }
-.w-empty { grid-column:span 3; padding:48px 24px; text-align:center; }
-.w-empty h4 { font-family:'Cormorant Garamond',serif; font-size:20px; margin-bottom:6px; }
-.w-empty p { font-size:13px; color:var(--mid); }
-
-/* TOAST */
-.toast { position:fixed; bottom:88px; left:50%; transform:translateX(-50%) translateY(16px); background:var(--ink); color:var(--cream); padding:11px 20px; border-radius:24px; font-size:13px; font-weight:500; white-space:nowrap; opacity:0; transition:all .25s; z-index:200; pointer-events:none; }
-.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
-
-/* OUTFIT COLLAGE */
-.oc-collage { height:220px; position:relative; overflow:hidden; border-radius:0; }
-.collage-empty { width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:48px; font-family:'Cormorant Garamond',serif; }
-.collage-badge { position:absolute; bottom:12px; left:12px; font-size:10px; letter-spacing:1.5px; text-transform:uppercase; font-weight:600; background:rgba(255,255,255,0.85); backdrop-filter:blur(4px); padding:4px 10px; border-radius:20px; }
-.collage-single { width:100%; height:100%; }
-.collage-single img { width:100%; height:100%; object-fit:cover; object-position:top; }
-.collage-two { display:grid; grid-template-columns:1.4fr 1fr; gap:2px; height:100%; }
-.c2-main,.c2-side { overflow:hidden; }
-.c2-main img,.c2-side img { width:100%; height:100%; object-fit:cover; object-position:top; }
-.collage-three { display:grid; grid-template-columns:1.4fr 1fr; gap:2px; height:100%; }
-.c3-main { overflow:hidden; }
-.c3-main img { width:100%; height:100%; object-fit:cover; object-position:top; }
-.c3-stack { display:grid; grid-template-rows:1fr 1fr; gap:2px; }
-.c3-a,.c3-b { overflow:hidden; }
-.c3-a img,.c3-b img { width:100%; height:100%; object-fit:cover; object-position:top; }
-
-.api-key-indicator { font-size:11px; color:var(--rose); cursor:pointer; text-decoration:underline; }
-
-.key-bar{background:#1C1917;color:#F8F4EF;padding:10px 20px;display:flex;gap:8px;align-items:center;flex-shrink:0;}
-.key-bar input{flex:1;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:8px 12px;color:white;font-family:'DM Sans',sans-serif;font-size:12px;outline:none;}
+:root{--cream:#F8F4EF;--parchment:#F2EDE6;--warm:#EDE5DA;--blush:#D4A898;--rose:#B8765E;--ink:#1C1917;--mid:#7C7269;--light:#C8C0B8;--white:#FDFBF8;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{width:100%;max-width:430px;margin:0 auto;height:100%;min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);overflow-x:hidden;}
+body{display:flex;flex-direction:column;height:100dvh;overflow:hidden;}
+.screen{display:none;flex:1;overflow-y:auto;flex-direction:column;}
+.screen.active{display:flex;}
+.key-bar{background:#1C1917;color:#F8F4EF;padding:10px 16px;display:flex;gap:8px;align-items:center;flex-shrink:0;}
+.key-bar input{flex:1;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:8px 10px;color:white;font-family:'DM Sans',sans-serif;font-size:12px;outline:none;}
 .key-bar input::placeholder{color:rgba(255,255,255,.4);}
-.key-bar button{background:#B8765E;color:white;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;}
-.key-bar.connected{background:#1a2e1a;}
-.key-bar.connected input{display:none;}
-.key-bar.connected .key-hint{font-size:12px;color:rgba(255,255,255,.7);}
+.key-bar button{background:#B8765E;color:white;border:none;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;}
+.key-bar.ok{background:#1a2e1a;}
+.key-bar.ok .kstat{font-size:12px;color:rgba(255,255,255,.8);}
+.key-bar.ok .kchange{color:#B8765E;cursor:pointer;text-decoration:underline;margin-left:8px;}
+.topbar{padding:16px 20px 14px;background:var(--white);border-bottom:1px solid var(--warm);flex-shrink:0;}
+.topbar-row{display:flex;align-items:baseline;justify-content:space-between;}
+.wordmark{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;}
+.wordmark em{font-style:italic;color:var(--rose);}
+.sub{font-size:11px;color:var(--mid);margin-top:2px;}
+.bottom-nav{display:flex;background:var(--white);border-top:1px solid var(--warm);padding:8px 0 12px;flex-shrink:0;}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:none;cursor:pointer;padding:5px 0;}
+.nb svg{width:18px;height:18px;stroke:var(--light);stroke-width:1.5;fill:none;transition:stroke .15s;}
+.nb.active svg{stroke:var(--ink);}
+.nb span{font-size:9px;letter-spacing:.8px;text-transform:uppercase;color:var(--light);font-weight:500;}
+.nb.active span{color:var(--ink);}
+.slabel{padding:16px 20px 10px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mid);font-weight:500;}
+.picks-row{display:flex;gap:10px;padding:0 20px 16px;overflow-x:auto;scrollbar-width:none;}
+.picks-row::-webkit-scrollbar{display:none;}
+.pc{flex-shrink:0;width:170px;background:var(--white);border:1px solid var(--warm);border-radius:12px;overflow:hidden;cursor:pointer;transition:transform .15s;}
+.pc:active{transform:scale(.97);}
+.pc-img{height:160px;position:relative;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px;}
+.pc-img div{display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--light);}
+.pc-img div:first-child{grid-row:span 2;font-size:28px;}
+.pc-badge{position:absolute;top:8px;left:8px;background:var(--ink);color:var(--cream);font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:3px 8px;border-radius:20px;font-weight:500;}
+.pc-body{padding:10px 12px 12px;}
+.pc-ev{font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:var(--blush);font-weight:500;margin-bottom:3px;}
+.pc-name{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:500;margin-bottom:3px;}
+.pc-items{font-size:10px;color:var(--mid);line-height:1.5;}
+.qgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 20px 24px;}
+.qc{background:var(--white);border:1px solid var(--warm);border-radius:10px;padding:12px 14px;cursor:pointer;text-align:left;transition:all .15s;}
+.qc:active{background:var(--parchment);}
+.qc-ev{font-size:13px;font-weight:500;}
+.qc-vibe{font-size:11px;color:var(--mid);margin-top:1px;}
+.fb{padding:16px 20px 0;}
+.ft{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--mid);font-weight:500;margin-bottom:8px;}
+.cr{display:flex;flex-wrap:wrap;gap:7px;}
+.chip{padding:8px 14px;font-size:12px;border:1px solid var(--light);border-radius:8px;background:var(--white);cursor:pointer;color:var(--ink);transition:all .15s;}
+.chip.on{background:var(--ink);color:var(--cream);border-color:var(--ink);}
+.gobtn{display:block;margin:18px 20px 0;width:calc(100% - 40px);background:var(--ink);color:var(--cream);border:none;border-radius:12px;padding:14px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;}
+.gobtn:disabled{background:var(--light);}
+.gobtn:active{background:var(--rose);}
+.ra{padding:18px 20px 0;}
+.rh{margin-bottom:12px;}
+.rh h3{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:500;}
+.rh p{font-size:12px;color:var(--mid);margin-top:2px;}
+.sn{background:linear-gradient(135deg,var(--parchment),var(--warm));border:1px solid var(--blush);border-radius:10px;padding:12px 14px;display:flex;gap:10px;margin-bottom:12px;}
+.sn-av{width:30px;height:30px;border-radius:50%;background:var(--blush);display:flex;align-items:center;justify-content:center;font-size:13px;color:white;font-weight:700;flex-shrink:0;}
+.sn-name{font-size:9px;letter-spacing:.8px;text-transform:uppercase;color:var(--rose);font-weight:600;margin-bottom:2px;}
+.sn-msg{font-size:12px;line-height:1.5;font-style:italic;}
+.oc{background:var(--white);border:1px solid var(--warm);border-radius:12px;overflow:hidden;margin-bottom:12px;animation:su .3s ease both;}
+@keyframes su{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.oc:nth-child(3){animation-delay:.07s}.oc:nth-child(4){animation-delay:.14s}.oc:nth-child(5){animation-delay:.21s}
+.oc-top{height:180px;position:relative;overflow:hidden;}
+.collage-empty{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:44px;font-family:'Cormorant Garamond',serif;}
+.collage-single{width:100%;height:100%;}.collage-single img{width:100%;height:100%;object-fit:cover;object-position:top;}
+.collage-two{display:grid;grid-template-columns:1.4fr 1fr;gap:2px;height:100%;}
+.collage-two div{overflow:hidden;}.collage-two div img{width:100%;height:100%;object-fit:cover;object-position:top;}
+.collage-three{display:grid;grid-template-columns:1.4fr 1fr;gap:2px;height:100%;}
+.c3m{overflow:hidden;}.c3m img{width:100%;height:100%;object-fit:cover;object-position:top;}
+.c3s{display:grid;grid-template-rows:1fr 1fr;gap:2px;}
+.c3s div{overflow:hidden;}.c3s div img{width:100%;height:100%;object-fit:cover;object-position:top;}
+.oc-bdg{position:absolute;bottom:8px;left:8px;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;background:rgba(255,255,255,.9);padding:3px 8px;border-radius:20px;}
+.oc-body{padding:14px 16px 16px;}
+.oc-name{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:500;margin-bottom:6px;}
+.oc-why{font-size:12px;color:var(--mid);line-height:1.6;margin-bottom:8px;}
+.oc-fit{font-size:11px;color:var(--mid);font-style:italic;margin-bottom:8px;}
+.oc-tags{display:flex;flex-wrap:wrap;gap:5px;}
+.ot{font-size:10px;background:var(--parchment);border:1px solid var(--warm);border-radius:5px;padding:3px 8px;color:var(--mid);}
+.ov{font-size:10px;background:var(--rose);border-radius:5px;padding:3px 8px;color:white;font-weight:500;}
+.ald{padding:36px 20px;text-align:center;}
+.ald-dots{display:flex;justify-content:center;gap:5px;margin-bottom:12px;}
+.ald-dot{width:6px;height:6px;border-radius:50%;background:var(--blush);animation:dp 1.4s infinite;}
+.ald-dot:nth-child(2){animation-delay:.2s}.ald-dot:nth-child(3){animation-delay:.4s}
+@keyframes dp{0%,80%,100%{transform:scale(.7);opacity:.5}40%{transform:scale(1);opacity:1}}
+.ald p{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:17px;color:var(--mid);}
+.usec{padding:14px 20px 0;}
+.ust{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--mid);font-weight:500;margin-bottom:10px;}
+.ugrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.ugrid.four{grid-template-columns:repeat(4,1fr);}
+.ucat{background:var(--white);border:1px solid var(--warm);border-radius:10px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;position:relative;transition:all .15s;}
+.ucat input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.ucat:active{background:var(--parchment);}
+.ucat-icon{width:34px;height:34px;border-radius:8px;background:var(--parchment);display:flex;align-items:center;justify-content:center;}
+.ucat-icon svg{width:18px;height:18px;stroke:var(--rose);stroke-width:1.5;fill:none;}
+.ucat-lbl{font-size:11px;font-weight:500;}
+.ucat-sub{font-size:9px;color:var(--mid);}
+.wcats{padding:14px 20px 0;}
+.wctrow{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px;}
+.wctrow::-webkit-scrollbar{display:none;}
+.wct{flex-shrink:0;padding:5px 12px;font-size:11px;border:1px solid var(--light);border-radius:20px;background:var(--white);color:var(--mid);cursor:pointer;transition:all .15s;}
+.wct.on{background:var(--ink);color:var(--cream);border-color:var(--ink);}
+.wgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;padding:10px 0 24px;}
+.wi{aspect-ratio:3/4;position:relative;overflow:hidden;background:var(--parchment);cursor:pointer;}
+.wi img{width:100%;height:100%;object-fit:cover;}
+.wi-em{display:flex;align-items:center;justify-content:center;font-size:32px;width:100%;height:100%;}
+.wo{position:absolute;inset:0;background:rgba(28,25,23,.55);display:flex;flex-direction:column;justify-content:flex-end;padding:7px;opacity:0;transition:opacity .15s;}
+.wi:active .wo{opacity:1;}
+.wn{font-size:10px;color:white;font-weight:500;line-height:1.3;}
+.wk{font-size:9px;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.5px;margin-top:1px;}
+.wsk{aspect-ratio:3/4;background:var(--warm);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px;}
+.wskp{width:26px;height:26px;border-radius:50%;background:var(--light);animation:skp 1.2s ease infinite;}
+@keyframes skp{0%,100%{opacity:.4}50%{opacity:1}}
+.wemp{grid-column:span 3;padding:36px 20px;text-align:center;}
+.wemp h4{font-family:'Cormorant Garamond',serif;font-size:17px;margin-bottom:5px;}
+.wemp p{font-size:12px;color:var(--mid);}
+.toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%) translateY(14px);background:var(--ink);color:var(--cream);padding:9px 16px;border-radius:20px;font-size:12px;font-weight:500;white-space:nowrap;opacity:0;transition:all .25s;z-index:200;pointer-events:none;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 </style>
 </head>
 <body>
-<div class="app">
 
-  <div class="key-bar" id="key-bar">
-    <input id="key-input" type="password" placeholder="Paste Anthropic API key (sk-ant-...)" autocomplete="off"/>
-    <button onclick="connectKey()">Connect</button>
+<div class="key-bar" id="key-bar">
+  <input id="key-input" type="password" placeholder="Paste Gemini API key (AIza...)" autocomplete="off"/>
+  <button onclick="connectKey()">Connect</button>
+</div>
+
+<div id="s-home" class="screen active">
+  <div class="topbar">
+    <div class="topbar-row"><div class="wordmark">shuf<em>fl</em>e</div><div style="font-size:11px;color:var(--mid)" id="cnt">0 items</div></div>
+    <div class="sub">your personal stylist</div>
   </div>
-
-  <!-- HOME -->
-  <div id="s-home" class="screen active">
-    <div class="topbar">
-      <div class="topbar-row">
-        <div class="wordmark">shuf<em>fl</em>e</div>
-        <div style="font-size:12px;color:var(--mid)" id="cnt-home">0 items</div>
-      </div>
-      <div class="topbar-sub">your personal stylist</div>
+  <div style="flex:1;overflow-y:auto">
+    <div class="slabel">Today's picks</div>
+    <div class="picks-row" id="picks-row"></div>
+    <div class="slabel" style="padding-top:4px">What's the plan?</div>
+    <div class="qgrid">
+      <button class="qc" onclick="qd('Coffee date','Chic')"><div class="qc-ev">Coffee date</div><div class="qc-vibe">Chic · effortless</div></button>
+      <button class="qc" onclick="qd('Temple','Elegant')"><div class="qc-ev">Temple</div><div class="qc-vibe">Elegant · covered</div></button>
+      <button class="qc" onclick="qd('Family dinner','Elegant')"><div class="qc-ev">Family dinner</div><div class="qc-vibe">Polished · warm</div></button>
+      <button class="qc" onclick="qd('Night out','Street')"><div class="qc-ev">Night out</div><div class="qc-vibe">Street · edgy</div></button>
+      <button class="qc" onclick="qd('Grocery run','Casual')"><div class="qc-ev">Grocery run</div><div class="qc-vibe">Casual · comfy</div></button>
+      <button class="qc" onclick="qd('Work meeting','Chic')"><div class="qc-ev">Work meeting</div><div class="qc-vibe">Sharp · confident</div></button>
     </div>
-    <div class="home-body">
-      <div class="section-label">Today's picks</div>
-      <div class="picks-row" id="picks-row"></div>
-      <div class="quick-wrap">
-        <div class="section-label" style="padding:0 0 12px">What's the plan?</div>
-        <div class="quick-grid">
-          <button class="qchip" onclick="quickDress('Coffee date','Chic')"><div class="qchip-ev">Coffee date</div><div class="qchip-vibe">Chic · effortless</div></button>
-          <button class="qchip" onclick="quickDress('Temple visit','Elegant')"><div class="qchip-ev">Temple</div><div class="qchip-vibe">Elegant · covered</div></button>
-          <button class="qchip" onclick="quickDress('Family dinner','Elegant')"><div class="qchip-ev">Family dinner</div><div class="qchip-vibe">Polished · warm</div></button>
-          <button class="qchip" onclick="quickDress('Night out','Street')"><div class="qchip-ev">Night out</div><div class="qchip-vibe">Street · edgy</div></button>
-          <button class="qchip" onclick="quickDress('Grocery run','Casual')"><div class="qchip-ev">Grocery run</div><div class="qchip-vibe">Casual · comfy</div></button>
-          <button class="qchip" onclick="quickDress('Work meeting','Chic')"><div class="qchip-ev">Work meeting</div><div class="qchip-vibe">Sharp · confident</div></button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- DRESS ME -->
-  <div id="s-dress" class="screen">
-    <div class="topbar">
-      <div class="topbar-row"><div class="wordmark">Get <em>dressed</em></div></div>
-      <div class="topbar-sub">tell me the plan — i'll handle the rest</div>
-    </div>
-    <div class="dress-body">
-      <div class="filter-block">
-        <div class="filter-title">Where are you going?</div>
-        <div class="chips-row">
-          <div class="chip" data-g="event" onclick="pickChip(this)">Coffee date</div>
-          <div class="chip" data-g="event" onclick="pickChip(this)">Temple</div>
-          <div class="chip" data-g="event" onclick="pickChip(this)">Family dinner</div>
-          <div class="chip" data-g="event" onclick="pickChip(this)">Night out</div>
-          <div class="chip" data-g="event" onclick="pickChip(this)">Grocery run</div>
-          <div class="chip" data-g="event" onclick="pickChip(this)">Work meeting</div>
-        </div>
-      </div>
-      <div class="filter-block">
-        <div class="filter-title">How do you want to feel?</div>
-        <div class="chips-row">
-          <div class="chip" data-g="vibe" onclick="pickChip(this)">Chic</div>
-          <div class="chip" data-g="vibe" onclick="pickChip(this)">Casual</div>
-          <div class="chip" data-g="vibe" onclick="pickChip(this)">Girly</div>
-          <div class="chip" data-g="vibe" onclick="pickChip(this)">Street</div>
-          <div class="chip" data-g="vibe" onclick="pickChip(this)">Elegant</div>
-        </div>
-      </div>
-      <div class="filter-block">
-        <div class="filter-title">Weather?</div>
-        <div class="chips-row">
-          <div class="chip" data-g="wx" onclick="pickChip(this)">Hot</div>
-          <div class="chip" data-g="wx" onclick="pickChip(this)">Warm</div>
-          <div class="chip" data-g="wx" onclick="pickChip(this)">Cool</div>
-        </div>
-      </div>
-      <button class="go-btn" id="go-btn" onclick="runStylist()">Style me →</button>
-      <div id="results-area" class="results-area" style="display:none"></div>
-    </div>
-  </div>
-
-  <!-- WARDROBE -->
-  <div id="s-wardrobe" class="screen">
-    <div class="topbar">
-      <div class="topbar-row">
-        <div class="wordmark">My <em>wardrobe</em></div>
-        <div style="font-size:12px;color:var(--mid)" id="cnt-w">0 items</div>
-      </div>
-      <div class="topbar-sub">the more i know, the better i style you</div>
-    </div>
-    <div class="wardrobe-body">
-      <div class="upload-sec">
-        <div class="upload-sec-title">Add clothes by category</div>
-        <div class="upload-grid">
-          <label class="ucat">
-            <input type="file" multiple accept="image/*" onchange="handleUpload(event,'tops')">
-            <div class="ucat-icon"><svg viewBox="0 0 24 24"><path d="M20.38 3.46L16 2a4 4 0 01-8 0L3.62 3.46a2 2 0 00-1.34 2.23l.58 3.57a1 1 0 00.99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 002-2V10h2.15a1 1 0 00.99-.84l.58-3.57a2 2 0 00-1.34-2.23z"/></svg></div>
-            <div class="ucat-lbl">Tops</div>
-            <div class="ucat-sub">kurtas · shirts · tees</div>
-          </label>
-          <label class="ucat">
-            <input type="file" multiple accept="image/*" onchange="handleUpload(event,'bottoms')">
-            <div class="ucat-icon"><svg viewBox="0 0 24 24"><path d="M6 2l-2 8h4l1 12h6l1-12h4L18 2H6z"/></svg></div>
-            <div class="ucat-lbl">Bottoms</div>
-            <div class="ucat-sub">pants · skirts · jeans</div>
-          </label>
-          <label class="ucat">
-            <input type="file" multiple accept="image/*" onchange="handleUpload(event,'dresses')">
-            <div class="ucat-icon"><svg viewBox="0 0 24 24"><path d="M12 2C9 2 7 4 7 7v1L4 22h16L17 8V7c0-3-2-5-5-5z"/></svg></div>
-            <div class="ucat-lbl">Dresses</div>
-            <div class="ucat-sub">dresses · co-ords · suits</div>
-          </label>
-          <label class="ucat">
-            <input type="file" multiple accept="image/*" onchange="handleUpload(event,'outerwear')">
-            <div class="ucat-icon"><svg viewBox="0 0 24 24"><path d="M12 3L8 6H4v14h16V6h-4L12 3z"/></svg></div>
-            <div class="ucat-lbl">Jackets</div>
-            <div class="ucat-sub">coats · blazers · shrugs</div>
-          </label>
-        </div>
-        <div class="upload-grid four">
-          <label class="ucat">
-            <input type="file" multiple accept="image/*" onchange="handleUpload(event,'footwear')">
-            <div class="ucat-icon" style="width:36px;height:36px;border-radius:8px"><svg viewBox="0 0 24 24" style="width:18px;height:18px"><path d="M2 18l1-8h14l3 4v4H2z"/><path d="M3 14h4"/></svg></div>
-            <div class="ucat-lbl">Shoes</div>
-          </label>
-          <label class="ucat">
-            <input type="file" multiple accept="image/*" onchange="handleUpload(event,'bags')">
-            <div class="ucat-icon" style="width:36px;height:36px;border-radius:8px"><svg viewBox="0 0 24 24" style="width:18px;height:18px"><rect x="2" y="7" width="20" height="15" rx="2"/><path d="M16 7V5a4 4 0 00-8 0v2"/></svg></div>
-            <div class="ucat-lbl">Bags</div>
-          </label>
-          <label class="ucat">
-            <input type="file" multiple accept="image/*" onchange="handleUpload(event,'jewellery')">
-            <div class="ucat-icon" style="width:36px;height:36px;border-radius:8px"><svg viewBox="0 0 24 24" style="width:18px;height:18px"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg></div>
-            <div class="ucat-lbl">Jewellery</div>
-          </label>
-          <label class="ucat">
-            <input type="file" multiple accept="image/*" onchange="handleUpload(event,'accessories')">
-            <div class="ucat-icon" style="width:36px;height:36px;border-radius:8px"><svg viewBox="0 0 24 24" style="width:18px;height:18px"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
-            <div class="ucat-lbl">Other</div>
-          </label>
-        </div>
-      </div>
-      <div class="w-cats">
-        <div class="w-cat-row">
-          <button class="wct on" onclick="filterW(this,'all')">All</button>
-          <button class="wct" onclick="filterW(this,'tops')">Tops</button>
-          <button class="wct" onclick="filterW(this,'bottoms')">Bottoms</button>
-          <button class="wct" onclick="filterW(this,'dresses')">Dresses</button>
-          <button class="wct" onclick="filterW(this,'outerwear')">Jackets</button>
-          <button class="wct" onclick="filterW(this,'footwear')">Shoes</button>
-          <button class="wct" onclick="filterW(this,'bags')">Bags</button>
-          <button class="wct" onclick="filterW(this,'jewellery')">Jewellery</button>
-        </div>
-        <div class="w-grid" id="w-grid"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- BOTTOM NAV -->
-  <nav class="bottom-nav">
-    <button class="nav-btn active" id="nav-home" onclick="goScreen('home')">
-      <div class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
-      <div class="nav-lbl">Home</div>
-    </button>
-    <button class="nav-btn" id="nav-dress" onclick="goScreen('dress')">
-      <div class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 2C9 2 7 4 7 7v1L4 21h16L17 8V7c0-3-2-5-5-5z"/></svg></div>
-      <div class="nav-lbl">Style me</div>
-    </button>
-    <button class="nav-btn" id="nav-wardrobe" onclick="goScreen('wardrobe')">
-      <div class="nav-icon"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/><path d="M7 8h2M7 12h2M15 8h2M15 12h2"/></svg></div>
-      <div class="nav-lbl">Wardrobe</div>
-    </button>
-  </nav>
-
   </div>
 </div>
 
+<div id="s-dress" class="screen">
+  <div class="topbar">
+    <div class="wordmark">Get <em>dressed</em></div>
+    <div class="sub">tell me the plan — i'll handle the rest</div>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding-bottom:24px">
+    <div class="fb"><div class="ft">Where are you going?</div><div class="cr">
+      <div class="chip" data-g="ev" onclick="pc(this)">Coffee date</div>
+      <div class="chip" data-g="ev" onclick="pc(this)">Temple</div>
+      <div class="chip" data-g="ev" onclick="pc(this)">Family dinner</div>
+      <div class="chip" data-g="ev" onclick="pc(this)">Night out</div>
+      <div class="chip" data-g="ev" onclick="pc(this)">Grocery run</div>
+      <div class="chip" data-g="ev" onclick="pc(this)">Work meeting</div>
+    </div></div>
+    <div class="fb"><div class="ft">How do you want to feel?</div><div class="cr">
+      <div class="chip" data-g="vi" onclick="pc(this)">Chic</div>
+      <div class="chip" data-g="vi" onclick="pc(this)">Casual</div>
+      <div class="chip" data-g="vi" onclick="pc(this)">Girly</div>
+      <div class="chip" data-g="vi" onclick="pc(this)">Street</div>
+      <div class="chip" data-g="vi" onclick="pc(this)">Elegant</div>
+    </div></div>
+    <div class="fb"><div class="ft">Weather?</div><div class="cr">
+      <div class="chip" data-g="wx" onclick="pc(this)">Hot</div>
+      <div class="chip" data-g="wx" onclick="pc(this)">Warm</div>
+      <div class="chip" data-g="wx" onclick="pc(this)">Cool</div>
+    </div></div>
+    <button class="gobtn" id="gobtn" onclick="style_me()">Style me →</button>
+    <div id="ra" class="ra" style="display:none"></div>
+  </div>
 </div>
+
+<div id="s-ward" class="screen">
+  <div class="topbar">
+    <div class="topbar-row"><div class="wordmark">My <em>wardrobe</em></div><div style="font-size:11px;color:var(--mid)" id="wcnt">0 items</div></div>
+    <div class="sub">the more i know, the better i style you</div>
+  </div>
+  <div style="flex:1;overflow-y:auto">
+    <div class="usec">
+      <div class="ust">Add clothes by category</div>
+      <div class="ugrid">
+        <label class="ucat"><input type="file" multiple accept="image/*" onchange="upload(event,'tops')">
+          <div class="ucat-icon"><svg viewBox="0 0 24 24"><path d="M20.38 3.46L16 2a4 4 0 01-8 0L3.62 3.46a2 2 0 00-1.34 2.23l.58 3.57a1 1 0 00.99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 002-2V10h2.15a1 1 0 00.99-.84l.58-3.57a2 2 0 00-1.34-2.23z"/></svg></div>
+          <div class="ucat-lbl">Tops</div><div class="ucat-sub">kurtas · shirts</div>
+        </label>
+        <label class="ucat"><input type="file" multiple accept="image/*" onchange="upload(event,'bottoms')">
+          <div class="ucat-icon"><svg viewBox="0 0 24 24"><path d="M6 2l-2 8h4l1 12h6l1-12h4L18 2H6z"/></svg></div>
+          <div class="ucat-lbl">Bottoms</div><div class="ucat-sub">pants · skirts</div>
+        </label>
+        <label class="ucat"><input type="file" multiple accept="image/*" onchange="upload(event,'dresses')">
+          <div class="ucat-icon"><svg viewBox="0 0 24 24"><path d="M12 2C9 2 7 4 7 7v1L4 22h16L17 8V7c0-3-2-5-5-5z"/></svg></div>
+          <div class="ucat-lbl">Dresses</div><div class="ucat-sub">co-ords · sets</div>
+        </label>
+        <label class="ucat"><input type="file" multiple accept="image/*" onchange="upload(event,'outerwear')">
+          <div class="ucat-icon"><svg viewBox="0 0 24 24"><path d="M12 3L8 6H4v14h16V6h-4L12 3z"/></svg></div>
+          <div class="ucat-lbl">Jackets</div><div class="ucat-sub">coats · blazers</div>
+        </label>
+      </div>
+      <div class="ugrid four">
+        <label class="ucat"><input type="file" multiple accept="image/*" onchange="upload(event,'footwear')">
+          <div class="ucat-icon"><svg viewBox="0 0 24 24" style="width:16px;height:16px"><path d="M2 18l1-8h14l3 4v4H2z"/></svg></div>
+          <div class="ucat-lbl">Shoes</div>
+        </label>
+        <label class="ucat"><input type="file" multiple accept="image/*" onchange="upload(event,'bags')">
+          <div class="ucat-icon"><svg viewBox="0 0 24 24" style="width:16px;height:16px"><rect x="2" y="7" width="20" height="15" rx="2"/><path d="M16 7V5a4 4 0 00-8 0v2"/></svg></div>
+          <div class="ucat-lbl">Bags</div>
+        </label>
+        <label class="ucat"><input type="file" multiple accept="image/*" onchange="upload(event,'jewellery')">
+          <div class="ucat-icon"><svg viewBox="0 0 24 24" style="width:16px;height:16px"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></div>
+          <div class="ucat-lbl">Jewellery</div>
+        </label>
+        <label class="ucat"><input type="file" multiple accept="image/*" onchange="upload(event,'accessories')">
+          <div class="ucat-icon"><svg viewBox="0 0 24 24" style="width:16px;height:16px"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
+          <div class="ucat-lbl">Other</div>
+        </label>
+      </div>
+    </div>
+    <div class="wcats">
+      <div class="wctrow">
+        <button class="wct on" onclick="fw(this,'all')">All</button>
+        <button class="wct" onclick="fw(this,'tops')">Tops</button>
+        <button class="wct" onclick="fw(this,'bottoms')">Bottoms</button>
+        <button class="wct" onclick="fw(this,'dresses')">Dresses</button>
+        <button class="wct" onclick="fw(this,'outerwear')">Jackets</button>
+        <button class="wct" onclick="fw(this,'footwear')">Shoes</button>
+        <button class="wct" onclick="fw(this,'bags')">Bags</button>
+        <button class="wct" onclick="fw(this,'jewellery')">Jewellery</button>
+      </div>
+      <div class="wgrid" id="wgrid"></div>
+    </div>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <button class="nb active" id="nb-home" onclick="go('home')">
+    <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>Home</span>
+  </button>
+  <button class="nb" id="nb-dress" onclick="go('dress')">
+    <svg viewBox="0 0 24 24"><path d="M12 2C9 2 7 4 7 7v1L4 21h16L17 8V7c0-3-2-5-5-5z"/></svg>
+    <span>Style me</span>
+  </button>
+  <button class="nb" id="nb-ward" onclick="go('ward')">
+    <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/><path d="M7 8h2M7 12h2M15 8h2M15 12h2"/></svg>
+    <span>Wardrobe</span>
+  </button>
+</nav>
 
 <div class="toast" id="toast"></div>
 
 <script>
+const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=';
+let API_KEY = localStorage.getItem('shuffle_gemini_key') || '';
 
-// ── API KEY ──
-let API_KEY = localStorage.getItem('shuffle_key') || '';
-function connectKey(){
+function connectKey() {
   const v = document.getElementById('key-input').value.trim();
-  if(!v){alert('Paste your API key first');return;}
+  if (!v) { alert('Paste your Gemini API key first'); return; }
   API_KEY = v;
-  localStorage.setItem('shuffle_key', v);
+  localStorage.setItem('shuffle_gemini_key', v);
+  showKeyConnected();
+  toast('Connected! Mia is ready ✦');
+}
+function showKeyConnected() {
   const bar = document.getElementById('key-bar');
-  bar.className = 'key-bar connected';
-  bar.innerHTML = '<span class="key-hint">✓ API key connected — Mia is ready</span>';
-  toast('Connected! Try Style me now ✦');
+  bar.className = 'key-bar ok';
+  bar.innerHTML = '<span class="kstat">✓ Mia is ready</span><span class="kchange" onclick="resetKey()">change key</span>';
 }
-function getHeaders(){
-  return {'Content-Type':'application/json','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','x-api-key':API_KEY};
+function resetKey() {
+  API_KEY = ''; localStorage.removeItem('shuffle_gemini_key');
+  const bar = document.getElementById('key-bar');
+  bar.className = 'key-bar';
+  bar.innerHTML = '<input id="key-input" type="password" placeholder="Paste Gemini API key (AIza...)" autocomplete="off"/><button onclick="connectKey()">Connect</button>';
 }
-// On load, check if key exists
-window.addEventListener('DOMContentLoaded', () => {
-  if(API_KEY){
-    const bar = document.getElementById('key-bar');
-    bar.className = 'key-bar connected';
-    bar.innerHTML = '<span class="key-hint">✓ API key connected &nbsp;<span style="color:#B8765E;cursor:pointer;text-decoration:underline" onclick="resetKey()">change</span></span>';
-  }
-});
-function resetKey(){
-  API_KEY='';localStorage.removeItem('shuffle_key');
-  const bar=document.getElementById('key-bar');
-  bar.className='key-bar';
-  bar.innerHTML='<input id="key-input" type="password" placeholder="Paste Anthropic API key (sk-ant-...)" autocomplete="off"/><button onclick="connectKey()">Connect</button>';
-}
+if (API_KEY) showKeyConnected();
 
-// ── INDEXEDDB STORAGE ──
-const DB_NAME = 'shuffle_db';
-const DB_STORE = 'wardrobe';
-let db = null;
+// IndexedDB
+const DB_NAME='shuffle_db', DB_STORE='wardrobe';
+let db=null;
+async function initDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB_NAME,1);r.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains(DB_STORE))d.createObjectStore(DB_STORE,{keyPath:'id'});};r.onsuccess=e=>{db=e.target.result;res();};r.onerror=()=>rej(r.error);});}
+async function dbGetAll(){return new Promise(res=>{if(!db){res([]);return;}const tx=db.transaction(DB_STORE,'readonly');const r=tx.objectStore(DB_STORE).getAll();r.onsuccess=()=>res(r.result||[]);r.onerror=()=>res([]);});}
+async function dbPut(item){return new Promise(res=>{if(!db){res();return;}const tx=db.transaction(DB_STORE,'readwrite');tx.objectStore(DB_STORE).put(item);tx.oncomplete=res;tx.onerror=res;});}
+async function dbDel(id){return new Promise(res=>{if(!db){res();return;}const tx=db.transaction(DB_STORE,'readwrite');tx.objectStore(DB_STORE).delete(id);tx.oncomplete=res;tx.onerror=res;});}
 
-async function initDB() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 1);
-    req.onupgradeneeded = e => {
-      const d = e.target.result;
-      if (!d.objectStoreNames.contains(DB_STORE)) {
-        d.createObjectStore(DB_STORE, { keyPath: 'id' });
-      }
-    };
-    req.onsuccess = e => { db = e.target.result; resolve(); };
-    req.onerror = () => reject(req.error);
-  });
-}
+function compress(url){return new Promise(res=>{const i=new Image();i.onload=()=>{const M=500;let w=i.width,h=i.height;if(w>M){h=Math.round(h*M/w);w=M;}const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(i,0,0,w,h);res(c.toDataURL('image/jpeg',.72));};i.src=url;});}
 
-async function dbGetAll() {
-  return new Promise((resolve) => {
-    if (!db) { resolve([]); return; }
-    const tx = db.transaction(DB_STORE, 'readonly');
-    const req = tx.objectStore(DB_STORE).getAll();
-    req.onsuccess = () => resolve(req.result || []);
-    req.onerror = () => resolve([]);
-  });
-}
-
-async function dbPut(item) {
-  return new Promise((resolve) => {
-    if (!db) { resolve(); return; }
-    const tx = db.transaction(DB_STORE, 'readwrite');
-    tx.objectStore(DB_STORE).put(item);
-    tx.oncomplete = resolve;
-    tx.onerror = resolve;
-  });
-}
-
-async function dbDelete(id) {
-  return new Promise((resolve) => {
-    if (!db) { resolve(); return; }
-    const tx = db.transaction(DB_STORE, 'readwrite');
-    tx.objectStore(DB_STORE).delete(id);
-    tx.oncomplete = resolve;
-    tx.onerror = resolve;
-  });
-}
-
-// Compress image to max ~400px wide, quality 0.7
-function compressImage(dataUrl) {
-  return new Promise(resolve => {
-    const img = new Image();
-    img.onload = () => {
-      const MAX = 500;
-      let w = img.width, h = img.height;
-      if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
-      const canvas = document.createElement('canvas');
-      canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      resolve(canvas.toDataURL('image/jpeg', 0.72));
-    };
-    img.src = dataUrl;
-  });
-}
-
-const DEFAULT_WARDROBE = [
-  {id:1,name:"Black chikankari kurta",category:"tops",color:"black",tags:["elegant","chic"],imageUrl:null,emoji:"🖤"},
-  {id:2,name:"Grey floral kurta",category:"tops",color:"grey",tags:["casual","girly"],imageUrl:null,emoji:"🩶"},
-  {id:3,name:"Lime green embroidered kurta",category:"tops",color:"green",tags:["chic"],imageUrl:null,emoji:"💚"},
-  {id:4,name:"Pink cotton kurta",category:"tops",color:"pink",tags:["casual","girly"],imageUrl:null,emoji:"🌸"},
-  {id:5,name:"Cream paisley kurta",category:"tops",color:"cream",tags:["elegant"],imageUrl:null,emoji:"🤍"},
-  {id:6,name:"Wine embroidered kurta",category:"tops",color:"wine",tags:["elegant"],imageUrl:null,emoji:"🍷"},
-  {id:7,name:"Denim jacket",category:"outerwear",color:"denim",tags:["casual","street"],imageUrl:null,emoji:"💙"},
-  {id:8,name:"Light blue overshirt",category:"outerwear",color:"lightblue",tags:["casual"],imageUrl:null,emoji:"🩵"},
+const DEFAULT=[
+  {id:1,name:"Black chikankari kurta",cat:"tops",color:"black",tags:["elegant","chic"],img:null,em:"🖤"},
+  {id:2,name:"Grey floral kurta",cat:"tops",color:"grey",tags:["casual","girly"],img:null,em:"🩶"},
+  {id:3,name:"Lime green embroidered kurta",cat:"tops",color:"green",tags:["chic"],img:null,em:"💚"},
+  {id:4,name:"Pink cotton kurta",cat:"tops",color:"pink",tags:["casual","girly"],img:null,em:"🌸"},
+  {id:5,name:"Cream paisley kurta",cat:"tops",color:"cream",tags:["elegant"],img:null,em:"🤍"},
+  {id:6,name:"Wine embroidered kurta",cat:"tops",color:"wine",tags:["elegant"],img:null,em:"🍷"},
+  {id:7,name:"Denim jacket",cat:"outerwear",color:"denim",tags:["casual","street"],img:null,em:"💙"},
+  {id:8,name:"Light blue overshirt",cat:"outerwear",color:"lightblue",tags:["casual"],img:null,em:"🩵"},
 ];
+let wardrobe=[], ev='', vi='', wx='', wcat='all';
 
-// ── STATE ──
-let wardrobe = [];
-let selEvent='', selVibe='', selWx='';
-let wCat='all';
-
-// ── NAV ──
-function goScreen(name) {
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('s-'+name).classList.add('active');
-  document.getElementById('nav-'+name).classList.add('active');
-  if(name==='wardrobe') renderW();
-  if(name==='home') renderPicks();
-  updateCounts();
+function go(s){
+  document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(x=>x.classList.remove('active'));
+  document.getElementById('s-'+s).classList.add('active');
+  document.getElementById('nb-'+s).classList.add('active');
+  if(s==='ward')rw(); if(s==='home')rp(); cnt();
 }
-
-// ── CHIPS ──
-function pickChip(el) {
-  const g = el.dataset.g;
-  document.querySelectorAll(`.chip[data-g="${g}"]`).forEach(c=>c.classList.remove('on'));
+function pc(el){
+  const g=el.dataset.g;
+  document.querySelectorAll('.chip[data-g="'+g+'"]').forEach(c=>c.classList.remove('on'));
   el.classList.add('on');
-  if(g==='event') selEvent=el.textContent.trim();
-  if(g==='vibe') selVibe=el.textContent.trim();
-  if(g==='wx') selWx=el.textContent.trim();
+  if(g==='ev')ev=el.textContent; if(g==='vi')vi=el.textContent; if(g==='wx')wx=el.textContent;
 }
-
-// ── COLLAGE HELPERS ──
-function buildCollage(items, pal) {
-  var withPhotos = items.filter(function(m){ return m && m.imageUrl; });
-  var total = Math.min(withPhotos.length, 3);
-  if (total === 0) return '<div class="collage-empty" style="color:' + pal.ac + '">&#10022;</div>';
-  if (total === 1) return '<div class="collage-single"><img src="' + withPhotos[0].imageUrl + '" alt=""></div>';
-  if (total === 2) return '<div class="collage-two"><div class="c2-main"><img src="' + withPhotos[0].imageUrl + '" alt=""></div><div class="c2-side"><img src="' + withPhotos[1].imageUrl + '" alt=""></div></div>';
-  return '<div class="collage-three"><div class="c3-main"><img src="' + withPhotos[0].imageUrl + '" alt=""></div><div class="c3-stack"><div class="c3-a"><img src="' + withPhotos[1].imageUrl + '" alt=""></div><div class="c3-b"><img src="' + withPhotos[2].imageUrl + '" alt=""></div></div></div>';
+function col(items,pal){
+  const p=items.filter(m=>m&&m.img), n=Math.min(p.length,3);
+  if(!n)return '<div class="collage-empty" style="color:'+pal.ac+'">✦</div>';
+  if(n===1)return '<div class="collage-single"><img src="'+p[0].img+'"></div>';
+  if(n===2)return '<div class="collage-two"><div><img src="'+p[0].img+'"></div><div><img src="'+p[1].img+'"></div></div>';
+  return '<div class="collage-three"><div class="c3m"><img src="'+p[0].img+'"></div><div class="c3s"><div><img src="'+p[1].img+'"></div><div><img src="'+p[2].img+'"></div></div></div>';
 }
-
-function buildResultsHTML(outfits, bgPals) {
-  var intro = '<div class="r-header"><h3>' + (selEvent || selVibe) + '</h3><p>' + outfits.length + ' looks ready for you</p></div>';
-    var banner = '<div class="stylist-note"><div class="sn-av">M</div><div><div class="sn-name">Mia &middot; your stylist</div><div class="sn-msg">Styled for ' + (selEvent || 'today') + (selVibe ? ' &mdash; ' + selVibe.toLowerCase() + ' energy' : '') + '. Each look is intentional.</div></div></div>';
-  var cards = outfits.map(function(o, i) {
-    var pal = bgPals[i % bgPals.length];
-    var matched = o.items.map(function(itemName) {
-      return wardrobe.find(function(w) {
-        var wn = w.name.toLowerCase();
-        var inn = itemName.toLowerCase();
-        return wn === inn || inn.includes(wn.split(' ').slice(0,2).join(' ')) || wn.includes(inn.split(' ').slice(0,2).join(' '));
-      }) || null;
-    }).filter(Boolean);
-    var tags = o.items.map(function(it){ return '<span class="oc-tag">' + it + '</span>'; }).join('');
-    return '<div class="outfit-card">' +
-      '<div class="oc-collage" style="background:' + pal.bg + '">' +
-        buildCollage(matched, pal) +
-        '<div class="collage-badge" style="color:' + pal.ac + '">Look ' + (i+1) + '</div>' +
-      '</div>' +
-      '<div class="oc-body">' +
-        '<div class="oc-name">' + o.name + '</div>' +
-        '<div class="oc-why">' + o.mia_note + '</div>' +
-        (o.occasion_fit ? '<div class="oc-fit">' + o.occasion_fit + '</div>' : '') +
-        '<div class="oc-tags">' + tags + '<span class="oc-vibe">' + o.vibe_tag + '</span></div>' +
-      '</div></div>';
-  }).join('');
-  return intro + banner + cards;
-}
-
-// ── STYLIST ──
-async function runStylist() {
-  if(!selEvent && !selVibe){showToast('Pick an event or vibe first');return;}
-  if(!API_KEY){document.getElementById('key-input') && document.getElementById('key-input').focus();showToast('Paste your API key at the top first');return;}
-  const area = document.getElementById('results-area');
-  const btn = document.getElementById('go-btn');
+async function style_me(){
+  if(!ev&&!vi){toast('Pick an event or vibe first');return;}
+  if(!API_KEY){toast('Connect your Gemini key first');return;}
+  const ra=document.getElementById('ra'), btn=document.getElementById('gobtn');
   btn.disabled=true; btn.textContent='Styling...';
-  area.style.display='block';
-  area.innerHTML=`<div class="ai-load"><div class="ai-dots"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div><p>Mia is styling you...</p><div class="ai-load-sub">building looks for ${selEvent||selVibe}</div></div>`;
-
-  const list = wardrobe.map(w=>`• ${w.name} [${w.category}] [colors:${w.color}] [vibes:${(w.tags||[]).join(',')}]`).join('\n');
-
-  const prompt=`You are Mia — a sharp, warm, opinionated personal stylist. You know your client's wardrobe and you're building real outfit combinations for them. Think like a real stylist: consider colour harmony, occasion fit, and what each look says about the wearer.
-
-CLIENT'S WARDROBE:
-${list||'Empty wardrobe — tell them to add clothes first.'}
-
-OCCASION: ${selEvent||'not specified'}
-VIBE THEY WANT: ${selVibe||'not specified'}
-WEATHER: ${selWx||'warm'}
-
-Create exactly 4 distinct outfit combinations using ONLY items from the wardrobe above. Each outfit must feel intentional and tell a story — not a random dump.
-
-Rules:
-- Use exact item names from the wardrobe
-- Make each look genuinely different from the others
-- Mia's note should be specific to THIS outfit and THIS occasion — no generic styling tips
-- "occasion_fit" should tell the client why this is the right choice for where they're going
-
-Respond ONLY with valid JSON array. No markdown. No explanation outside the JSON:
-[{"name":"poetic 2-4 word outfit name","mia_note":"1-2 sentences in Mia's voice — specific, warm, direct. What does this look say?","items":["exact item name","exact item name","exact item name"],"vibe_tag":"one word","occasion_fit":"one sentence on why this works for the occasion"}]`;
-
-  try {
-    const r = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        ...getHeaders()
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-5",
-        max_tokens: 1400,
-        messages: [{role:"user", content: prompt}]
-      })
-    });
-    const text = await r.text();
-    console.log('RAW API RESPONSE:', text.slice(0, 500));
-    let d;
-    try { d = JSON.parse(text); } catch(pe) { throw new Error('Not JSON: ' + text.slice(0,200)); }
-    if (d.error) throw new Error(d.error.type + ': ' + d.error.message);
-    if (!d.content) throw new Error('No content field. Keys: ' + Object.keys(d).join(', ') + ' | ' + text.slice(0,300));
-    const raw = d.content.map(i => i.text || "").join("").replace(/```json|```/g,"").trim();
-    console.log('RAW OUTFITS:', raw.slice(0, 300));
-    const outfits = JSON.parse(raw);
-
-    const bgPals = [
-      {bg:"#F2EDE6", ac:"#C4967A"},
-      {bg:"#EBE8F2", ac:"#9088B8"},
-      {bg:"#E8F0E8", ac:"#7AA87A"},
-      {bg:"#F0E8E0", ac:"#B8986A"},
-    ];
-
-    area.innerHTML = buildResultsHTML(outfits, bgPals);
-
-  } catch(e) {
-    console.error('Mia error:', e);
-    const msg = e.message || 'Unknown error';
-    area.innerHTML = '<div style="padding:32px 0 16px;text-align:center">' +
-      '<p style="font-size:18px;font-family:Cormorant Garamond,serif;font-style:italic;color:var(--mid)">Something went wrong</p>' +
-      '<p style="font-size:12px;color:var(--light);margin-top:8px;padding:0 16px;word-break:break-all">' + msg + '</p>' +
-      (msg.includes('auth') || msg.includes('key') || msg.includes('401') ?
-        '<p style="font-size:13px;color:var(--rose);margin-top:12px;cursor:pointer" onclick="showApiModal()">Tap to re-enter API key</p>' : '') +
-      '</div>';
+  ra.style.display='block';
+  ra.innerHTML='<div class="ald"><div class="ald-dots"><div class="ald-dot"></div><div class="ald-dot"></div><div class="ald-dot"></div></div><p>Mia is styling you...</p></div>';
+  const list=wardrobe.map(w=>'- '+w.name+' ['+w.cat+']['+w.color+']').join('\n');
+  const prompt='You are Mia, a sharp warm personal stylist. Build 4 outfit combinations from this wardrobe:\n\n'+list+'\n\nOCCASION: '+(ev||'any')+'\nVIBE: '+(vi||'any')+'\nWEATHER: '+(wx||'warm')+'\n\nUse exact item names. Make each look distinct. Write Mia notes in her warm direct voice — specific to this occasion, not generic.\n\nRespond ONLY with a JSON array, no markdown:\n[{"name":"outfit name","mia_note":"1-2 sentences why this works","items":["exact name","exact name","exact name"],"vibe_tag":"one word","occasion_fit":"one sentence"}]';
+  try{
+    const r=await fetch(GEMINI_URL+API_KEY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})});
+    const d=await r.json();
+    if(d.error)throw new Error(d.error.message);
+    const raw=d.candidates[0].content.parts[0].text.replace(/```json|```/g,'').trim();
+    const outfits=JSON.parse(raw);
+    const pals=[{bg:'#F2EDE6',ac:'#C4967A'},{bg:'#EBE8F2',ac:'#9088B8'},{bg:'#E8F0E8',ac:'#7AA87A'},{bg:'#F0E8E0',ac:'#B8986A'}];
+    ra.innerHTML='<div class="rh"><h3>'+(ev||vi)+'</h3><p>'+outfits.length+' looks ready</p></div>'+
+      '<div class="sn"><div class="sn-av">M</div><div><div class="sn-name">Mia · your stylist</div><div class="sn-msg">Styled for '+(ev||'today')+(vi?' — '+vi.toLowerCase()+' energy':'')+'. Each look is intentional.</div></div></div>'+
+      outfits.map((o,i)=>{
+        const pal=pals[i%pals.length];
+        const matched=o.items.map(n=>wardrobe.find(w=>w.name.toLowerCase()===n.toLowerCase()||w.name.toLowerCase().includes(n.toLowerCase().split(' ')[0]))||null).filter(Boolean);
+        return '<div class="oc"><div class="oc-top" style="background:'+pal.bg+'">'+col(matched,pal)+'<div class="oc-bdg" style="color:'+pal.ac+'">Look '+(i+1)+'</div></div>'+
+          '<div class="oc-body"><div class="oc-name">'+o.name+'</div><div class="oc-why">'+o.mia_note+'</div>'+(o.occasion_fit?'<div class="oc-fit">'+o.occasion_fit+'</div>':'')+
+          '<div class="oc-tags">'+o.items.map(t=>'<span class="ot">'+t+'</span>').join('')+'<span class="ov">'+o.vibe_tag+'</span></div></div></div>';
+      }).join('');
+  }catch(e){
+    ra.innerHTML='<div style="padding:28px 0;text-align:center"><p style="font-family:Cormorant Garamond,serif;font-style:italic;color:var(--mid);font-size:17px">'+e.message+'</p></div>';
   }
   btn.disabled=false; btn.textContent='Style me →';
-  area.scrollIntoView({behavior:'smooth',block:'start'});
+  ra.scrollIntoView({behavior:'smooth',block:'start'});
 }
+function qd(e,v){ev=e;vi=v;go('dress');setTimeout(()=>{document.querySelectorAll('.chip[data-g="ev"]').forEach(c=>c.classList.toggle('on',c.textContent===e));document.querySelectorAll('.chip[data-g="vi"]').forEach(c=>c.classList.toggle('on',c.textContent===v));style_me();},60);}
 
-// ── QUICK FROM HOME ──
-function quickDress(ev,vibe){
-  selEvent=ev; selVibe=vibe;
-  goScreen('dress');
-  setTimeout(()=>{
-    document.querySelectorAll('.chip[data-g="event"]').forEach(c=>c.classList.toggle('on',c.textContent.trim()===ev));
-    document.querySelectorAll('.chip[data-g="vibe"]').forEach(c=>c.classList.toggle('on',c.textContent.trim()===vibe));
-    runStylist();
-  },80);
-}
-
-// ── UPLOAD ──
-async function analyseImg(b64,mt,hint){
-  const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:getHeaders(),body:JSON.stringify({model:"claude-sonnet-4-5",max_tokens:120,messages:[{role:"user",content:[{type:"image",source:{type:"base64",media_type:mt,data:b64}},{type:"text",text:`Category hint: "${hint}". Identify this clothing item precisely. Respond ONLY with valid JSON, no markdown:\n{"name":"specific name e.g. 'Olive flared trousers' or 'Black chikankari kurta'","color":"main color","style_tags":["tag1","tag2"]}`}]}]})});
+async function aiName(b64,mt,hint){
+  const r=await fetch(GEMINI_URL+API_KEY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{inline_data:{mime_type:mt,data:b64}},{text:'Category: "'+hint+'". Identify this clothing item. Respond ONLY with JSON, no markdown: {"name":"specific item name","color":"main color","style_tags":["tag1","tag2"]}'}]}]})});
   const d=await r.json();
-  return JSON.parse(d.content.map(i=>i.text||'').join('').replace(/```json|```/g,'').trim());
+  if(d.error)throw new Error(d.error.message);
+  return JSON.parse(d.candidates[0].content.parts[0].text.replace(/```json|```/g,'').trim());
 }
 
-function handleUpload(e, cat) {
-  const files = Array.from(e.target.files);
-  if (!files.length) return;
-  e.target.value = '';
-  showToast('Reading ' + files.length + ' photo' + (files.length > 1 ? 's' : '') + '...');
-  goScreen('wardrobe');
-
-  const grid = document.getElementById('w-grid');
-  const empty = grid.querySelector('.w-empty');
-  if (empty) empty.remove();
-
-  const skIds = files.map((_, i) => 'sk-' + Date.now() + '-' + i);
-  skIds.forEach(sid => {
-    const el = document.createElement('div');
-    el.className = 'w-sk'; el.id = sid;
-    el.innerHTML = '<div class="w-sk-pulse"></div><div class="w-sk-lbl">' + cat + '</div>';
-    grid.prepend(el);
-  });
-
-  files.forEach((f, i) => {
-    const reader = new FileReader();
-    reader.onload = async (ev) => {
-      const skEl = document.getElementById(skIds[i]);
-      try {
-        // Compress first
-        const compressed = await compressImage(ev.target.result);
-        const b64 = compressed.split(',')[1];
-        const mt = 'image/jpeg';
-        const id = Date.now() + i + Math.random();
-
-        let name = f.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
-        let color = 'mixed'; let tags = [cat];
-
-        try {
-            const info = await analyseImg(b64, mt, cat);
-            name = info.name || name;
-            color = info.color || color;
-            tags = info.style_tags || tags;
-          } catch(_) {}
-
-        const item = { id, name, category: cat, color, tags, imageUrl: compressed, emoji: null };
-        wardrobe.push(item);
-        await dbPut(item);
-
-        if (skEl) {
-          skEl.className = 'w-item';
-          skEl.innerHTML = '<img src="' + compressed + '" alt="' + name + '"><div class="w-overlay"><div class="w-iname">' + name + '</div><div class="w-icat">' + cat + '</div></div>';
-          skEl.addEventListener('click', () => {
-            if (confirm('Remove this item?')) {
-              wardrobe = wardrobe.filter(w => w.id !== id);
-              dbDelete(id);
-              skEl.remove();
-              updateCounts();
-            }
-          });
-          skEl.removeAttribute('id');
-        }
-        updateCounts();
-        showSaved();
-      } catch(err) {
-        console.error(err);
-        if (skEl) skEl.remove();
-      }
+function upload(e,cat){
+  const files=Array.from(e.target.files); if(!files.length)return;
+  e.target.value=''; toast('Adding '+files.length+' item'+(files.length>1?'s':'')+'...');
+  go('ward');
+  const grid=document.getElementById('wgrid');
+  const emp=grid.querySelector('.wemp'); if(emp)emp.remove();
+  const sks=files.map((_,i)=>'sk'+Date.now()+i);
+  sks.forEach(id=>{const el=document.createElement('div');el.className='wsk';el.id=id;el.innerHTML='<div class="wskp"></div>';grid.prepend(el);});
+  files.forEach((f,i)=>{
+    const reader=new FileReader();
+    reader.onload=async ev=>{
+      const sk=document.getElementById(sks[i]);
+      try{
+        const comp=await compress(ev.target.result);
+        const b64=comp.split(',')[1];
+        const id=Date.now()+i+Math.random();
+        let name=f.name.replace(/\.[^.]+$/,'').replace(/[-_]/g,' ');
+        let color='mixed', tags=[cat];
+        if(API_KEY){try{const inf=await aiName(b64,'image/jpeg',cat);name=inf.name||name;color=inf.color||color;tags=inf.style_tags||tags;}catch(_){}}
+        const item={id,name,cat,color,tags,img:comp,em:null};
+        wardrobe.push(item); await dbPut(item);
+        if(sk){sk.className='wi';sk.innerHTML='<img src="'+comp+'" alt="'+name+'"><div class="wo"><div class="wn">'+name+'</div><div class="wk">'+cat+'</div></div>';sk.addEventListener('click',()=>{if(confirm('Remove?')){wardrobe=wardrobe.filter(w=>w.id!==id);dbDel(id);sk.remove();cnt();}});sk.removeAttribute('id');}
+        cnt(); toast('✓ '+name);
+      }catch(err){if(sk)sk.remove();}
     };
     reader.readAsDataURL(f);
   });
 }
 
-// ── WARDROBE RENDER ──
-function renderW(cat){
-  cat=cat||wCat;
-  const grid=document.getElementById('w-grid');
-  const filtered=wardrobe.filter(w=>cat==='all'||w.category===cat);
-  if(!filtered.length){
-    grid.innerHTML=`<div class="w-empty"><h4>Nothing here yet</h4><p>Tap a category above to upload</p></div>`;
-    return;
-  }
-  grid.innerHTML=filtered.map(item=>`
-    <div class="w-item" data-id="${item.id}">
-      ${item.imageUrl?`<img src="${item.imageUrl}" alt="${item.name}">`:`<div class="w-item-emoji">${item.emoji||'👗'}</div>`}
-      <div class="w-overlay"><div class="w-iname">${item.name}</div><div class="w-icat">${item.category}</div></div>
-    </div>`).join('');
-
-  grid.querySelectorAll('.w-item').forEach(el=>{
-    const id=parseFloat(el.dataset.id);
-    el.addEventListener('click',()=>{
-      if(confirm('Remove this item?')){wardrobe=wardrobe.filter(w=>w.id!==id);dbDelete(id);el.remove();updateCounts();}
-    });
-  });
+function rw(cat){
+  cat=cat||wcat;
+  const g=document.getElementById('wgrid');
+  const f=wardrobe.filter(w=>cat==='all'||w.cat===cat);
+  if(!f.length){g.innerHTML='<div class="wemp"><h4>Nothing here yet</h4><p>Tap a category above</p></div>';return;}
+  g.innerHTML=f.map(w=>'<div class="wi" data-id="'+w.id+'">'+(w.img?'<img src="'+w.img+'">':`<div class="wi-em">${w.em||'👗'}</div>`)+'<div class="wo"><div class="wn">'+w.name+'</div><div class="wk">'+w.cat+'</div></div></div>').join('');
+  g.querySelectorAll('.wi').forEach(el=>{const id=parseFloat(el.dataset.id);el.addEventListener('click',()=>{if(confirm('Remove?')){wardrobe=wardrobe.filter(w=>w.id!==id);dbDel(id);el.remove();cnt();}});});
 }
+function fw(btn,cat){document.querySelectorAll('.wct').forEach(t=>t.classList.remove('on'));btn.classList.add('on');wcat=cat;rw(cat);}
 
-function filterW(btn,cat){
-  document.querySelectorAll('.wct').forEach(t=>t.classList.remove('on'));
-  btn.classList.add('on'); wCat=cat; renderW(cat);
-}
-
-// ── PICKS ──
 const PICKS=[
-  {rank:"Pick #1",event:"Coffee date",name:"The Soft Edit",items:"Cream paisley kurta · slim trousers · gold jhumkas",bg:"#F2EDE6"},
-  {rank:"Pick #2",event:"Temple",name:"Quiet Elegance",items:"Black chikankari kurta · dupatta · kolhapuris",bg:"#EBE8F2"},
-  {rank:"Pick #3",event:"Evening",name:"After Dark",items:"Wine kurta · straight pants · statement earrings",bg:"#E8F0E8"},
+  {r:"Pick #1",e:"Coffee date",n:"The Soft Edit",it:"Cream paisley kurta · slim trousers",bg:"#F2EDE6"},
+  {r:"Pick #2",e:"Temple",n:"Quiet Elegance",it:"Black chikankari · kolhapuris",bg:"#EBE8F2"},
+  {r:"Pick #3",e:"Night out",n:"After Dark",it:"Wine kurta · straight pants",bg:"#E8F0E8"}
 ];
+function rp(){document.getElementById('picks-row').innerHTML=PICKS.map(p=>'<div class="pc" onclick="qd(\''+p.e+'\',\'Chic\')"><div class="pc-img" style="background:'+p.bg+'"><div style="background:'+p.bg+'">✦</div><div style="background:'+p.bg+';opacity:.8">✧</div><div style="background:'+p.bg+';opacity:.6">◆</div><div class="pc-badge">'+p.r+'</div></div><div class="pc-body"><div class="pc-ev">'+p.e+'</div><div class="pc-name">'+p.n+'</div><div class="pc-items">'+p.it+'</div></div></div>').join('');}
 
-function renderPicks(){
-  document.getElementById('picks-row').innerHTML=PICKS.map(p=>`
-    <div class="pick-card" onclick="quickDress('${p.event}','Chic')">
-      <div class="pick-img" style="background:${p.bg}">
-        <div class="pick-board">
-          <div class="pb-cell" style="background:${p.bg}">✦</div>
-          <div class="pb-cell" style="background:${p.bg};opacity:.8">✧</div>
-          <div class="pb-cell" style="background:${p.bg};opacity:.6">◆</div>
-        </div>
-        <div class="pick-rank">${p.rank}</div>
-      </div>
-      <div class="pick-body">
-        <div class="pick-event">${p.event}</div>
-        <div class="pick-name">${p.name}</div>
-        <div class="pick-items">${p.items}</div>
-      </div>
-    </div>`).join('');
-}
+function cnt(){const n=wardrobe.length,t=n+' item'+(n!==1?'s':'');['cnt','wcnt'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=t;});}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 
-function updateCounts(){
-  const n=wardrobe.length;
-  const t=`${n} item${n!==1?'s':''}`;
-  ['cnt-home','cnt-w'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=t;});
-}
-
-function showSaved(){
-  const el=document.getElementById('cnt-w');
-  if(!el)return;
-  const prev=el.textContent;
-  el.textContent='✓ saved';
-  el.style.color='var(--rose)';
-  setTimeout(()=>{el.textContent=prev;el.style.color='';},1400);
-}
-
-function showToast(msg){
-  const t=document.getElementById('toast');
-  t.textContent=msg; t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2800);
-}
-
-// ── INIT ──
-async function init() {
+async function init(){
   await initDB();
-  const saved = await dbGetAll();
-  if (saved && saved.length > 0) {
-    wardrobe = saved;
-  } else {
-    wardrobe = DEFAULT_WARDROBE;
-    for (const item of wardrobe) await dbPut(item);
-  }
-  renderPicks();
-  renderW();
-  updateCounts();
+  const saved=await dbGetAll();
+  wardrobe=saved.length>0?saved:[...DEFAULT];
+  if(saved.length===0)for(const item of wardrobe)await dbPut(item);
+  rp();rw();cnt();
 }
 init();
 </script>
+
 </body>
 </html>
